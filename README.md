@@ -44,7 +44,7 @@ Expect ≈5 minutes of prep, then let the script do the heavy lifting. ✔️
 ```bash
 # Grab the migration script
 git clone https://github.boozallencsn.com/bdsf/bdsf-tenant-migration.git
-cd tenant-migration
+cd bdsf-tenant-migration
 ```
 
 Open `migrate_bdsf_gitlab_to_csn_github.py` and replace the placeholders:
