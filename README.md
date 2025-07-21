@@ -43,8 +43,8 @@ Expect ≈5 minutes of prep, then let the script do the heavy lifting. ✔️
 
 ```bash
 # Grab the migration script
-git clone https://github.boozallencsn.com/bdsf/help-desk/blob/main/tenant-migration/migrate_bdsf_gitlab_to_csn_github.py
-cd help-desk/tenant-migration
+git clone https://github.boozallencsn.com/bdsf/bdsf-tenant-migration.git
+cd tenant-migration
 ```
 
 Open `migrate_bdsf_gitlab_to_csn_github.py` and replace the placeholders:
@@ -52,8 +52,8 @@ Open `migrate_bdsf_gitlab_to_csn_github.py` and replace the placeholders:
 ```python
 GITLAB_TOKEN = 'YOUR_GITLAB_TOKEN'
 GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN'
-GITLAB_GROUP = 'your_gitlab_group'   # e.g. "BAH-Tenant1"
-GITHUB_ORG   = 'your_github_org'     # e.g. "BAH-Tenant1"
+GITLAB_GROUP = 'YOUR_GITLAB_GROUP'   # e.g. "BAH-Tenant1"
+GITHUB_ORG   = 'YOUR_GITHUB_ORG'     # e.g. "BAH-Tenant1"
 ```
 
 **🔄 Prefer environment variables?**
