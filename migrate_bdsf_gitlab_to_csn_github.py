@@ -15,12 +15,42 @@ GITLAB_GROUP = 'YOUR_GITLAB_GROUP'
 GITHUB_ORG = 'YOUR_GITHUB_ORG'
 #############################################################
 
-def get_gitlab_repos():
-    url = f"{GITLAB_API_URL}/groups/{GITLAB_GROUP}/projects?per_page=100"
+def get_subgroups(group_id):
+    url = f"{GITLAB_API_URL}/groups/{group_id}/subgroups?per_page=100"
     headers = {'PRIVATE-TOKEN': GITLAB_TOKEN}
     resp = requests.get(url, headers=headers)
     resp.raise_for_status()
     return resp.json()
+
+def get_group_repos(group_id):
+    url = f"{GITLAB_API_URL}/groups/{group_id}/projects?per_page=100"
+    headers = {'PRIVATE-TOKEN': GITLAB_TOKEN}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
+def get_all_repos_recursive(group_id, parent_path=""):
+    repos = []
+    # Get repos for this group
+    for repo in get_group_repos(group_id):
+        repo['full_path'] = f"{parent_path}/{repo['path']}" if parent_path else repo['path']
+        repos.append(repo)
+    # Get subgroups and recurse
+    for subgroup in get_subgroups(group_id):
+        sub_parent_path = f"{parent_path}/{subgroup['path']}" if parent_path else subgroup['path']
+        repos.extend(get_all_repos_recursive(subgroup['id'], sub_parent_path))
+    return repos
+
+def get_top_group_id(group_name):
+    url = f"{GITLAB_API_URL}/groups?search={group_name}"
+    headers = {'PRIVATE-TOKEN': GITLAB_TOKEN}
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    groups = resp.json()
+    for group in groups:
+        if group['path'] == group_name or group['name'] == group_name:
+            return group['id']
+    raise Exception(f"GitLab group '{group_name}' not found.")
 
 def create_github_repo(repo_name, private=True):
     url = f"{GITHUB_API_URL}/orgs/{GITHUB_ORG}/repos"
@@ -43,7 +73,7 @@ def create_github_repo(repo_name, private=True):
     return resp.json()
 
 def migrate_repo(repo):
-    repo_name = repo['path']
+    repo_name = repo['full_path'].replace('/', '__')  # Replace '/' to flatten structure in GitHub
     gitlab_ssh_url = repo['ssh_url_to_repo']
     github_url = f"git@github.boozallencsn.com:{GITHUB_ORG}/{repo_name}.git"
 
@@ -54,20 +84,21 @@ def migrate_repo(repo):
     subprocess.run(['git', 'clone', '--mirror', gitlab_ssh_url], check=True)
 
     logging.info(f"Pushing to GitHub repo '{repo_name}'")
-    subprocess.run(['git', 'remote', 'set-url', '--push', 'origin', github_url], cwd=f"{repo_name}.git", check=True)
-    subprocess.run(['git', 'push', '--mirror'], cwd=f"{repo_name}.git", check=True)
+    subprocess.run(['git', 'remote', 'set-url', '--push', 'origin', github_url], cwd=f"{repo['path']}.git", check=True)
+    subprocess.run(['git', 'push', '--mirror'], cwd=f"{repo['path']}.git", check=True)
 
-    logging.info(f"Cleaning up local repo mirror '{repo_name}.git'")
-    subprocess.run(['rm', '-rf', f"{repo_name}.git"], check=True)
+    logging.info(f"Cleaning up local repo mirror '{repo['path']}.git'")
+    subprocess.run(['rm', '-rf', f"{repo['path']}.git"], check=True)
 
 def main():
-    repos = get_gitlab_repos()
+    top_group_id = get_top_group_id(GITLAB_GROUP)
+    repos = get_all_repos_recursive(top_group_id)
     for repo in repos:
         try:
             migrate_repo(repo)
-            logging.info(f"Successfully migrated: {repo['path']}")
+            logging.info(f"Successfully migrated: {repo['full_path']}")
         except Exception as e:
-            logging.error(f"Failed migration for {repo['path']}: {e}")
+            logging.error(f"Failed migration for {repo['full_path']}: {e}")
 
 if __name__ == "__main__":
     main()
