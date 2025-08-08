@@ -1,19 +1,23 @@
+
 import subprocess
 import requests
 import logging
+import os
+from dotenv import load_dotenv
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s:%(message)s')
 
-GITLAB_API_URL = 'https://gitlab.dsf.boozallencsn.com/api/v4'
-GITHUB_API_URL = 'https://github.boozallencsn.com/api/v3'
+# Load environment variables from .env
+load_dotenv()
 
-##### Configuration - replace with your actual values ####### 
-GITLAB_TOKEN = 'YOUR_GITLAB_TOKEN'
-GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN'
-GITLAB_GROUP = 'YOUR_GITLAB_GROUP'
-GITHUB_ORG = 'YOUR_GITHUB_ORG'
-#############################################################
+GITLAB_API_URL = os.getenv('GITLAB_API_URL')
+GITHUB_API_URL = os.getenv('GITHUB_API_URL')
+GITLAB_TOKEN = os.getenv('GITLAB_TOKEN')
+GITHUB_TOKEN = os.getenv('GITHUB_TOKEN')
+GITLAB_TOP_GROUP_ID = os.getenv('GITLAB_TOP_GROUP_ID')
+GITHUB_ORG = os.getenv('GITHUB_ORG')
 
 def get_subgroups(group_id):
     url = f"{GITLAB_API_URL}/groups/{group_id}/subgroups?per_page=100"
@@ -41,16 +45,7 @@ def get_all_repos_recursive(group_id, parent_path=""):
         repos.extend(get_all_repos_recursive(subgroup['id'], sub_parent_path))
     return repos
 
-def get_top_group_id(group_name):
-    url = f"{GITLAB_API_URL}/groups?search={group_name}"
-    headers = {'PRIVATE-TOKEN': GITLAB_TOKEN}
-    resp = requests.get(url, headers=headers)
-    resp.raise_for_status()
-    groups = resp.json()
-    for group in groups:
-        if group['path'] == group_name or group['name'] == group_name:
-            return group['id']
-    raise Exception(f"GitLab group '{group_name}' not found.")
+    # Removed: now using GITLAB_TOP_GROUP_ID from .env
 
 def create_github_repo(repo_name, private=True):
     url = f"{GITHUB_API_URL}/orgs/{GITHUB_ORG}/repos"
@@ -90,9 +85,11 @@ def migrate_repo(repo):
     logging.info(f"Cleaning up local repo mirror '{repo['path']}.git'")
     subprocess.run(['rm', '-rf', f"{repo['path']}.git"], check=True)
 
+
 def main():
-    top_group_id = get_top_group_id(GITLAB_GROUP)
-    repos = get_all_repos_recursive(top_group_id)
+    if not GITLAB_TOP_GROUP_ID:
+        raise Exception("GITLAB_TOP_GROUP_ID must be set in the .env file.")
+    repos = get_all_repos_recursive(GITLAB_TOP_GROUP_ID)
     for repo in repos:
         try:
             migrate_repo(repo)

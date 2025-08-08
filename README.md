@@ -26,6 +26,44 @@ Expect ≈5 minutes of prep, then let the script do the heavy lifting. ✔️
 
 ## 2️⃣ Prerequisites 📝 <a id="prerequisites"></a>
 
+### Prerequisite Setup (Skip if already set up)
+
+**If you already have GitLab/GitHub Personal Access Tokens (PATs) and SSH keys configured, you can [skip to Download & Configure the Script ⏩](#download--configure-the-script).**
+
+#### 1. Create a GitLab Personal Access Token (PAT)
+
+1. Log in to GitLab.
+2. Go to **User Settings > Access Tokens**.
+3. Name your token, set an expiration, and select the `api` scope.
+4. Click **Create personal access token** and copy/save it securely.
+
+#### 2. Create a GitHub Personal Access Token (PAT)
+
+1. Log in to GitHub.
+2. Go to **Settings > Developer settings > Personal access tokens**.
+3. Click **Generate new token** (classic).
+4. Name your token, set an expiration, and select the `repo` scope.
+5. Click **Generate token** and copy/save it securely.
+
+#### 3. Create and Add SSH Keys to GitLab & GitHub
+
+1. Generate a new SSH key (if you don't have one):
+
+   ```bash
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   # or use rsa: ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+   ```
+
+2. Add your public key to GitLab:
+   - Go to **User Settings > SSH Keys**
+   - Paste the contents of your `~/.ssh/id_ed25519.pub` (or `id_rsa.pub`) file
+
+3. Add your public key to GitHub:
+   - Go to **Settings > SSH and GPG keys**
+   - Click **New SSH key**, give it a title, and paste your public key
+
+> For more details, see the official GitLab and GitHub documentation on PATs and SSH keys.
+
 | Need                                   | Why                                 |
 |-----------------------------------------|-------------------------------------|
 | GitLab Personal Access Token (api)      | List & clone repos                  |
@@ -47,33 +85,22 @@ git clone https://github.boozallencsn.com/bdsf/bdsf-tenant-migration.git
 cd bdsf-tenant-migration
 ```
 
-Open `migrate_bdsf_gitlab_to_csn_github.py` and replace the placeholders:
+## Configure Environment Variables
 
-```python
-GITLAB_TOKEN = 'YOUR_GITLAB_TOKEN'
-GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN'
-GITLAB_GROUP = 'YOUR_GITLAB_GROUP'   # e.g. "BAH-Tenant1"
-GITHUB_ORG   = 'YOUR_GITHUB_ORG'     # e.g. "BAH-Tenant1"
+All configuration is now handled via a `.env` file in the project root. Copy the example below and fill in your values:
+
+```env
+GITLAB_API_URL=https://gitlab.dsf.boozallencsn.com/api/v4
+GITHUB_API_URL=https://github.boozallencsn.com/api/v3
+GITLAB_TOKEN=your_gitlab_token
+GITHUB_TOKEN=your_github_token
+GITHUB_ORG=your_github_org
+GITLAB_TOP_GROUP_ID=your_gitlab_top_group_id  # e.g. 2305
 ```
 
-**🔄 Prefer environment variables?**
+> **Never commit your `.env` file to version control!**
 
-```python
-import os
-GITLAB_TOKEN = os.getenv("GL_TOKEN")
-GITHUB_TOKEN = os.getenv("GH_TOKEN")
-GITLAB_GROUP = os.getenv("GL_GROUP")
-GITHUB_ORG   = os.getenv("GH_ORG")
-```
-
-Export them before running:
-
-```bash
-export GL_TOKEN=xxxxxxxx
-export GH_TOKEN=yyyyyyyy
-export GL_GROUP=BAH-Tenant1
-export GH_ORG=BAH-Tenant1
-```
+The script uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load these variables automatically.
 
 ---
 
@@ -85,7 +112,10 @@ export GH_ORG=BAH-Tenant1
 # 2. Move to the script directory
 cd path/to/script
 
-# 3. Fire away
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Fire away
 python3 migrate_bdsf_gitlab_to_csn_github.py
 ```
 
@@ -132,6 +162,66 @@ Watch the log stream—each repo shows: **create → clone → push → cleanup 
 | Permission denied (publickey)          | SSH key not on GitHub/GitLab       | Add key or use HTTPS with PAT               |
 | `requests.exceptions.ConnectionError`  | Off VPN                            | Connect to ETSS/CSN F5 first                |
 | Partial history pushed                 | Used `git clone` (non-mirror)      | Delete GitHub repo, rerun script            |
+| Large file (>100MB) error              | GitHub blocks files >100MB          | See below for workaround                    |
+
+### Handling Large File (>100MB) Migration Issues
+
+If you hit an error about files over 100MB (GitHub's limit), follow these steps to finish migrating your repo (excluding the large files):
+
+1. **Clone the repo from GitLab:**
+
+   ```bash
+   git clone https://gitlab.dsf.boozallencsn.com/<your-gitlab-group>/<your-repo>
+   cd <your-repo>
+   ```
+
+2. **(Optional) Remove the old GitLab remote:**
+
+   ```bash
+   git remote remove origin
+   ```
+
+3. **Add the new GitHub remote:**
+
+   ```bash
+   git remote add origin https://github.boozallencsn.com/<your-org>/<your-repo>.git
+   ```
+
+4. **Install `git-filter-repo` to remove large files:**
+
+   - With pip (Linux/macOS/Windows):
+
+     ```bash
+     pip install git-filter-repo
+     # or
+     pip3 install git-filter-repo
+     ```
+
+   - With Homebrew (macOS):
+
+     ```bash
+     brew install git-filter-repo
+     ```
+
+5. **Strip files over 100MB:**
+
+   ```bash
+   git filter-repo --strip-blobs-bigger-than 100M --force
+   ```
+
+6. **Push to GitHub:**
+
+   ```bash
+   git push --all origin
+   ```
+
+7. **(Optional) Check remotes:**
+
+   ```bash
+   git remote -v
+   ```
+
+> ⚠️ Any files over 100MB will be excluded. If you need them, handle separately.
 
 ---
 
