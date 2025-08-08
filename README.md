@@ -113,10 +113,14 @@ The script uses [python-dotenv](https://pypi.org/project/python-dotenv/) to load
 # 2. Move to the script directory
 cd path/to/script
 
-# 3. Install dependencies
+# 3. (Recommended) Create and activate a virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 4. Install dependencies
 pip install -r requirements.txt
 
-# 4. Fire away
+# 5. Fire away
 python3 migrate_bdsf_gitlab_to_csn_github.py
 ```
 
