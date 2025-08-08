@@ -192,7 +192,15 @@ If you hit an error about files over 100MB (GitHub's limit), follow these steps 
    git remote add origin https://github.boozallencsn.com/<your-org>/<your-repo>.git
    ```
 
-4. **Install `git-filter-repo` to remove large files:**
+4. **(Optional) Identify files over 100MBs:**
+
+   ```bash
+   git rev-list --objects --all | \
+    git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' | \
+    awk '$1 == "blob" && $3 >= 100000000' | \
+    sort -k3 -n
+   ```
+5. **Install `git-filter-repo` to remove large files:**
 
    - With pip (Linux/macOS/Windows):
 
@@ -208,19 +216,19 @@ If you hit an error about files over 100MB (GitHub's limit), follow these steps 
      brew install git-filter-repo
      ```
 
-5. **Strip files over 100MB:**
+6. **Strip files over 100MB:**
 
    ```bash
    git filter-repo --strip-blobs-bigger-than 100M --force
    ```
 
-6. **Push to GitHub:**
+7. **Push to GitHub:**
 
    ```bash
    git push --all origin
    ```
 
-7. **(Optional) Check remotes:**
+8. **(Optional) Check remotes:**
 
    ```bash
    git remote -v
