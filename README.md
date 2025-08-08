@@ -152,7 +152,7 @@ Watch the log stream—each repo shows: **create → clone → push → cleanup 
 
 - **Repository list:** Confirm every repo appears in GitHub.
 - **Permissions:** Adjust org teams or repo settings if needed.
-- **CI/CD:** Re-point pipelines (GitHub Actions, Jenkinsfiles, etc.).
+- **CI/CD:** Reconfigure pipelines (using GitHub Actions).
 - **Issues & Wiki:** GitHub enables both; import extra data manually if required.
 - **Team notification:** Share new URLs and update docs/bookmarks.
 
