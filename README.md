@@ -64,14 +64,15 @@ Expect ≈5 minutes of prep, then let the script do the heavy lifting. ✔️
 
 > For more details, see the official GitLab and GitHub documentation on PATs and SSH keys.
 
-| Need                                   | Why                                 |
-|-----------------------------------------|-------------------------------------|
-| GitLab Personal Access Token (api)      | List & clone repos                  |
-| GitHub Personal Access Token (repo)     | Create & push repos                 |
-| SSH keys on both platforms              | Password-less clone/push            |
-| Python 3.x                             | Run the script                      |
-| Git CLI                                | Clone/push mirrors                  |
-| ETSS/CSN F5 VPN                        | Reach internal GitLab/GitHub hosts  |
+| Need                                | Why                                |
+| ----------------------------------- | ---------------------------------- |
+| GitLab Owner permissions            | Access to migrate full repos       |
+| GitLab Personal Access Token (api)  | List & clone repos                 |
+| GitHub Personal Access Token (repo) | Create & push repos                |
+| SSH keys on both platforms          | Password-less clone/push           |
+| Python 3.x                          | Run the script                     |
+| Git CLI                             | Clone/push mirrors                 |
+| ETSS/CSN F5 VPN                     | Reach internal GitLab/GitHub hosts |
 
 > 💡 **Tip:** Store your PATs securely (e.g., password manager or environment variables).
 
