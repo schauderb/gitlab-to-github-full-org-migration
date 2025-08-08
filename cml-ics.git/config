@@ -1,9 +1,0 @@
-[core]
-	repositoryformatversion = 0
-	filemode = true
-	bare = true
-[remote "origin"]
-	url = git@gitlab.dsf.boozallencsn.com:cml-ai/cml-ics.git
-	fetch = +refs/*:refs/*
-	mirror = true
-	pushurl = git@github.boozallencsn.com:bdsf/cml-ics.git
