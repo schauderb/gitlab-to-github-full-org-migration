@@ -171,28 +171,22 @@ Watch the log stream—each repo shows: **create → clone → push → cleanup 
 
 ### Handling Large File (>100MB) Migration Issues
 
-If you hit an error about files over 100MB (GitHub's limit), follow these steps to finish migrating your repo (excluding the large files):
+If you hit an error about files over 100MB (GitHub's limit), follow these steps to finish migrating your repo's that encountered LFS-related issues:
 
-1. **Clone the repo from GitLab:**
+1. **Clone the repo from GitLab (if necessary), or 'cd' into it (if already present from script):**
 
    ```bash
-   git clone https://gitlab.dsf.boozallencsn.com/<your-gitlab-group>/<your-repo>
+   git clone --mirror https://gitlab.dsf.boozallencsn.com/<your-gitlab-group>/<your-repo>
    cd <your-repo>
    ```
 
-2. **(Optional) Remove the old GitLab remote:**
+2. **Add the new GitHub remote:**
 
    ```bash
-   git remote remove origin
+   git remote add github https://github.boozallencsn.com/<your-org>/<your-repo>.git
    ```
 
-3. **Add the new GitHub remote:**
-
-   ```bash
-   git remote add origin https://github.boozallencsn.com/<your-org>/<your-repo>.git
-   ```
-
-4. **(Optional) Identify files over 100MBs:**
+3. **(Optional) Identify files over 100MBs:**
 
    ```bash
    git rev-list --objects --all | \
@@ -200,42 +194,57 @@ If you hit an error about files over 100MB (GitHub's limit), follow these steps 
     awk '$1 == "blob" && $3 >= 100000000' | \
     sort -k3 -n
    ```
-5. **Install `git-filter-repo` to remove large files:**
+
+4. **Install `git-lfs` to remove large files:**
 
    - With pip (Linux/macOS/Windows):
 
      ```bash
-     pip install git-filter-repo
+     pip install git-lfs
      # or
-     pip3 install git-filter-repo
+     pip3 install git-lfs
      ```
 
    - With Homebrew (macOS):
 
      ```bash
-     brew install git-filter-repo
+     brew install git-lfs
      ```
 
-6. **Strip files over 100MB:**
+5. **Run git lfs Fetch**
 
    ```bash
-   git filter-repo --strip-blobs-bigger-than 100M --force
+   git lfs fetch --all
    ```
 
-7. **Push to GitHub:**
+6. **Set Up git LFS Tracking:**
 
    ```bash
-   git push --all origin
+   git lfs track "*.<large-file-type> #only needed if not included in default list of .gitattributes file
    ```
 
-8. **(Optional) Check remotes:**
+7. **Run git LFS Migrate:**
 
    ```bash
-   git remote -v
+   git lfs migrate import --everything
    ```
 
-> ⚠️ Any files over 100MB will be excluded. If you need them, handle separately.
+8. **Run git Push w/ force**
 
+   ```bash
+   git push --force --all github
+   ```
+
+9. **Run git LFS Push**
+
+   ```bash
+   git lfs push --all github
+   ```
+
+10. **Verify Repo Updates in GitHub**
+
+    Navigate to the target GitHub repo to validate all contents have been successfully migrated.
+    
 ---
 
 ## 8️⃣ Support <a id="support"></a>
