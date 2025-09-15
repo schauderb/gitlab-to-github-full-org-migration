@@ -1,7 +1,7 @@
 import requests
 
 # CONFIGURATION
-GITLAB_URL = "https://gitlab.dsf.boozallencsn.com/"  # Change to your GitLab server URL if self-hosted
+GITLAB_URL = "https://gitlab.com/"  # Change to your GitLab server URL if self-hosted
 ACCESS_TOKEN = "your_personal_access_token"
 GROUP_ID = 12345678  # Replace with your actual group ID (integer)
 PROJECTS_TO_ARCHIVE = []  # Optional: specify project names to archive, e.g., ["project1", "project2"]
