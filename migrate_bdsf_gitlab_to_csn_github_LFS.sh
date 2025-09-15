@@ -4,7 +4,7 @@ set -euo pipefail
 # ================== Global config ==================
 umask 077
 
-: "${GITLAB_BASE_URL:?Set GITLAB_BASE_URL (e.g. https://gitlab.dsf.boozallencsn.com)}"
+: "${GITLAB_BASE_URL:?Set GITLAB_BASE_URL (e.g. https://gitlab.com)}"
 : "${GITLAB_TOKEN:?Set GITLAB_TOKEN}"
 : "${GITHUB_TOKEN:?Set GITHUB_TOKEN}"
 : "${GITHUB_ORG:?Set GITHUB_ORG}"
@@ -110,29 +110,29 @@ list_group_projects() {
 gh_repo_exists_nonempty() {
   local name="$1"
   local resp
-  resp=$(curl_gh -o /dev/stderr -w "%{http_code}" "https://api.github.boozallencsn.com/repos/$GITHUB_ORG/$name") || return 1
+  resp=$(curl_gh -o /dev/stderr -w "%{http_code}" "https://api.github.com/repos/$GITHUB_ORG/$name") || return 1
   [[ "$resp" == "200" ]] || return 1
   # consider non‑empty if it has any refs
   local tmp
   tmp=$(mktemp)
-  GIT_ASKPASS= GIT_TERMINAL_PROMPT=0 git ls-remote "https://oauth2:${GITHUB_TOKEN}@github.boozallencsn.com/$GITHUB_ORG/$name.git" >"$tmp" 2>/dev/null || true
+  GIT_ASKPASS= GIT_TERMINAL_PROMPT=0 git ls-remote "https://oauth2:${GITHUB_TOKEN}@github.com/$GITHUB_ORG/$name.git" >"$tmp" 2>/dev/null || true
   [[ -s "$tmp" ]]
 }
 
 create_or_update_gh_repo() {
   local name="$1" description="$2" default_branch="$3"
-  if curl_gh -o /dev/null -w "%{http_code}" "https://github.boozallencsn.com/api/v3/repos/$GITHUB_ORG/$name" | grep -q '^200$'; then
+  if curl_gh -o /dev/null -w "%{http_code}" "https://github.com/api/v3/repos/$GITHUB_ORG/$name" | grep -q '^200$'; then
     log "GitHub repo exists: $GITHUB_ORG/$name"
   else
     log "Creating GitHub repo: $GITHUB_ORG/$name"
-    curl_gh -X POST "https://github.boozallencsn.com/api/v3/orgs/$GITHUB_ORG/repos" \
+    curl_gh -X POST "https://github.com/api/v3/orgs/$GITHUB_ORG/repos" \
       -d @- <<JSON >/dev/null
 {"name":"$name","private":true,"has_issues":true,"has_projects":false,"has_wiki":false,"description":$(jq -Rn --arg d "$description" '$d')}
 JSON
   fi
   # set default branch to match source (after push completes we set again)
   if [[ -n "$default_branch" ]]; then
-  curl_gh -X PATCH "https://github.boozallencsn.com/api/v3/repos/$GITHUB_ORG/$name" \
+  curl_gh -X PATCH "https://github.com/api/v3/repos/$GITHUB_ORG/$name" \
       -d "{\"default_branch\":\"$default_branch\"}" >/dev/null || true
   fi
 }
@@ -145,7 +145,7 @@ with_temp_credentials() {
     cd "$repo"
     git config credential.helper ''
     git config --local credential.useHttpPath true
-  git config --local http.https://github.boozallencsn.com/.extraheader "AUTHORIZATION: basic $(printf "oauth2:%s" "$GITHUB_TOKEN" | base64)"
+  git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $(printf "oauth2:%s" "$GITHUB_TOKEN" | base64)"
     "$@"
   )
 }
@@ -200,7 +200,7 @@ run_lfs_migrate_if_needed() {
       # optional: rewrite submodule URLs to GitHub org
       if [[ "$REWRITE_SUBMODULES" == "true" ]] && [[ -f .gitmodules ]]; then
         log "Rewriting submodule URLs to GitHub org '$GITHUB_ORG'..."
-  sed -i.bak -E "s#(url = ).*?[/:]([^/]+/.*)\.git#\1https://github.boozallencsn.com/${GITHUB_ORG}/\2.git#g;s#/#-#3g" .gitmodules || true
+  sed -i.bak -E "s#(url = ).*?[/:]([^/]+/.*)\.git#\1https://github.com/${GITHUB_ORG}/\2.git#g;s#/#-#3g" .gitmodules || true
         git add .gitmodules || true
         git commit -m "Rewrite submodule URLs to $GITHUB_ORG (automated)" || true
       fi
@@ -216,7 +216,7 @@ run_lfs_migrate_if_needed() {
 
 # ---------- Verification ----------
 verify_push() {
-  local mirror_dir="$1" gh="https://oauth2:${GITHUB_TOKEN}@github.boozallencsn.com/$GITHUB_ORG/$2.git"
+  local mirror_dir="$1" gh="https://oauth2:${GITHUB_TOKEN}@github.com/$GITHUB_ORG/$2.git"
   (
     cd "$mirror_dir"
     # compare set of refs (names and oids)
@@ -301,9 +301,9 @@ migrate_one_project() {
 
     # Push to GitHub
     if [[ "$DRY_RUN" == "true" ]]; then
-      log "DRY_RUN: would push --mirror and LFS to github.boozallencsn.com/$GITHUB_ORG/$slug"
+      log "DRY_RUN: would push --mirror and LFS to github.com/$GITHUB_ORG/$slug"
     else
-      push_with_mirror "$mirror_dir" "https://github.boozallencsn.com/$GITHUB_ORG/$slug.git"
+      push_with_mirror "$mirror_dir" "https://github.com/$GITHUB_ORG/$slug.git"
       mark_state "$slug" "pushed"
     fi
 
@@ -313,16 +313,16 @@ migrate_one_project() {
         log "✅ Verified: refs and LFS present on GitHub."
       else
         warn "Verification found differences. Attempting final LFS push..."
-  with_temp_credentials "$mirror_dir" git lfs push --all "https://github.boozallencsn.com/$GITHUB_ORG/$slug.git" || true
+  with_temp_credentials "$mirror_dir" git lfs push --all "https://github.com/$GITHUB_ORG/$slug.git" || true
       fi
       # Enforce default branch again (now refs exist)
       if [[ -n "$default_branch" ]]; then
-        curl_gh -X PATCH "https://github.boozallencsn.com/api/v3/repos/$GITHUB_ORG/$slug" \
+        curl_gh -X PATCH "https://github.com/api/v3/repos/$GITHUB_ORG/$slug" \
           -d "{\"default_branch\":\"$default_branch\"}" >/dev/null || true
       fi
     fi
 
-    log "🎯 Migrated: $pwn → github.boozallencsn.com/$GITHUB_ORG/$slug"
+    log "🎯 Migrated: $pwn → github.com/$GITHUB_ORG/$slug"
   } 2>&1 | tee -a "$logf"
 }
 
