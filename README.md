@@ -82,7 +82,7 @@ Expect ≈5 minutes of prep, then let the script do the heavy lifting. ✔️
 
 ```bash
 # Grab the migration script
-git clone https://github.boozallencsn.com/bdsf/bdsf-tenant-migration.git
+git clone https://github.com/bdsf/bdsf-tenant-migration.git
 cd bdsf-tenant-migration
 ```
 
@@ -91,8 +91,8 @@ cd bdsf-tenant-migration
 All configuration is now handled via a `.env` file in the project root. Copy the example below and fill in your values:
 
 ```env
-GITLAB_API_URL=https://gitlab.dsf.boozallencsn.com/api/v4
-GITHUB_API_URL=https://github.boozallencsn.com/api/v3
+GITLAB_API_URL=https://gitlab.com/api/v4
+GITHUB_API_URL=https://github.com/api/v3
 GITLAB_TOKEN=your_gitlab_token
 GITHUB_TOKEN=your_github_token
 GITHUB_ORG=your_github_org
@@ -176,14 +176,14 @@ If you hit an error about files over 100MB (GitHub's limit), follow these steps 
 1. **Clone the repo from GitLab (if necessary), or 'cd' into it (if already present from script):**
 
    ```bash
-   git clone --mirror https://gitlab.dsf.boozallencsn.com/<your-gitlab-group>/<your-repo>
+   git clone --mirror https://gitlab.com/<your-gitlab-group>/<your-repo>
    cd <your-repo>
    ```
 
 2. **Add the new GitHub remote:**
 
    ```bash
-   git remote add github https://github.boozallencsn.com/<your-org>/<your-repo>.git
+   git remote add github https://github.com/<your-org>/<your-repo>.git
    ```
 
 3. **(Optional) Identify files over 100MBs:**
