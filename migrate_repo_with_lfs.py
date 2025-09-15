@@ -1,9 +1,9 @@
 # USAGE
 # python migrate_repo_with_lfs.py \
-#   --gitlab-url https://gitlab.dsf.boozallencsn.com/api/v4 \
+#   --gitlab-url https://gitlab.com/api/v4 \
 #   --gitlab-project "group/subgroup/repo" \
 #   --gitlab-token $GITLAB_TOKEN \
-#   --github-api https://github.boozallencsn.com/api/v3 \
+#   --github-api https://github.com/api/v3 \
 #   --github-org YourOrg \
 #   --github-repo repo \
 #   --github-token $GITHUB_TOKEN \
