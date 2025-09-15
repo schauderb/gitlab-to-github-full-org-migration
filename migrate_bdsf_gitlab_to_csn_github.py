@@ -70,7 +70,7 @@ def create_github_repo(repo_name, private=True):
 def migrate_repo(repo):
     repo_name = repo['full_path'].replace('/', '__')  # Replace '/' to flatten structure in GitHub
     gitlab_ssh_url = repo['ssh_url_to_repo']
-    github_url = f"git@github.boozallencsn.com:{GITHUB_ORG}/{repo_name}.git"
+    github_url = f"git@github.com:{GITHUB_ORG}/{repo_name}.git"
 
     logging.info(f"Creating GitHub repo '{repo_name}'")
     create_github_repo(repo_name)
